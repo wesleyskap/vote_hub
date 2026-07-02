@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_02_225205) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_02_225206) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -35,6 +35,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_225205) do
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "runiq_jobs", force: :cascade do |t|
+    t.integer "attempts", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.string "job_type", null: false
+    t.datetime "locked_at"
+    t.binary "payload", null: false
+    t.string "queue_name", null: false
+    t.datetime "run_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["queue_name", "status", "run_at"], name: "idx_runiq_jobs_pending", where: "((status)::text = 'pending'::text)"
   end
 
   create_table "vote_aggregations_by_hours", primary_key: ["paredao_id", "participant_id", "vote_hour"], force: :cascade do |t|
