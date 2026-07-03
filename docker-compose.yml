@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # 1. Frontend - Interface de Votação (React)
+  frontend:
+    image: node:20-alpine
+    container_name: bbb_frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8080/api/v1
+    depends_on:
+      - ingestion-api
+      - main-api
+
+  # 2. Vote Ingestion API (Go)
+  ingestion-api:
+    image: golang:1.22-alpine
+    container_name: bbb_ingestion_api
+    working_dir: /app
+    volumes:
+      - ./ingestion:/app
+    command: go run main.go
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/bbb_development
+      - RECAPTCHA_SECRET_KEY=your_secret
+    depends_on:
+      - postgres
+
+  # 3. Main API (Ruby on Rails 8)
+  main-api:
+    image: ruby:3.3
+    container_name: bbb_main_api
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    command: bash -c "bundle install && rm -f tmp/pids/server.pid && rails s -b 0.0.0.0"
+    ports:
+      - "3001:3000"
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/bbb_development
+    depends_on:
+      - postgres
+
+
+
+  # 5. Banco de Dados Relacional
+  postgres:
+    image: postgres:16-alpine
+    container_name: bbb_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bbb_development
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  # 6. Monitoramento: Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: bbb_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - ingestion-api
+      - main-api
+
+  # 7. Monitoramento: Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: bbb_grafana
+    ports:
+      - "3003:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
+volumes:
+  pg_data:

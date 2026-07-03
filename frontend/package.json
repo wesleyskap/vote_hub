@@ -1,0 +1,13 @@
+{
+  "name": "bbb-votacao-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@bbb/web",
+    "build": "npm run build --workspace=@bbb/web",
+    "test": "npm test --workspace=@bbb/core"
+  }
+}

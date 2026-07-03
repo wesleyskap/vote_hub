@@ -1,0 +1,31 @@
+# Dependency directories (never commit node_modules)
+node_modules/
+**/node_modules/
+
+# Build outputs
+/frontend/apps/web/dist/
+/frontend/packages/core/dist/
+.tscache/
+
+# Logs and databases
+/backend/log/
+/backend/tmp/
+/backend/db/*.sqlite3
+/backend/db/*.sqlite3-journal
+/backend/db/*.sqlite3-shm
+/backend/db/*.sqlite3-wal
+*.log
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDEs and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
