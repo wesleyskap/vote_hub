@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingestion-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ingestion-api
+  template:
+    metadata:
+      labels:
+        app: ingestion-api
+    spec:
+      containers:
+      - name: ingestion-api
+        image: bbb-ingestion:local
+        imagePullPolicy: IfNotPresent
+        command: ["/app/api"]
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DATABASE_URL
+          value: "postgres://postgres:postgres@postgres:5432/bbb_development?sslmode=disable"
+        - name: RECAPTCHA_SECRET_KEY
+          value: "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingestion-api
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30080
+  selector:
+    app: ingestion-api

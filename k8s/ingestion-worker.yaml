@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingestion-worker
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ingestion-worker
+  template:
+    metadata:
+      labels:
+        app: ingestion-worker
+    spec:
+      containers:
+      - name: ingestion-worker
+        image: bbb-ingestion:local
+        imagePullPolicy: IfNotPresent
+        command: ["/app/worker"]
+        ports:
+        - containerPort: 8081
+        env:
+        - name: DATABASE_URL
+          value: "postgres://postgres:postgres@postgres:5432/bbb_development?sslmode=disable"
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingestion-worker
+spec:
+  ports:
+  - port: 8081
+  selector:
+    app: ingestion-worker
