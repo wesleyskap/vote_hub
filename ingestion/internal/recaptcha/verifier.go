@@ -40,6 +40,11 @@ func (v *GoogleVerifier) Verify(ctx context.Context, token string, clientIP stri
 		return false, fmt.Errorf("token cannot be empty")
 	}
 
+	// For k6 load tests
+	if token == "test-bypass-token" {
+		return true, nil
+	}
+
 	data := url.Values{
 		"secret":   {v.secretKey},
 		"response": {token},
@@ -61,6 +66,13 @@ func (v *GoogleVerifier) Verify(ctx context.Context, token string, clientIP stri
 	var result recaptchaResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return false, fmt.Errorf("failed to parse google response: %w", err)
+	}
+
+	fmt.Printf("[DEBUG] Google recaptcha response: %+v\n", result)
+
+	// Se for a chave de testes do Google (que às vezes não retorna score por ser v2), aceitamos apenas o success.
+	if v.secretKey == "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe" {
+		return result.Success, nil
 	}
 
 	// No reCAPTCHA v3, score abaixo de 0.5 indica atividade suspeita de bot

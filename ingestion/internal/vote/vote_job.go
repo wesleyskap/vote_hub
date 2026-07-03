@@ -24,6 +24,9 @@ func NewVoteJob(db *sql.DB) *VoteJob {
 // Exemplo de uso:
 //   err := job.Perform(ctx, []byte(`{"paredao_id":1,"participant_id":2,"fingerprint_id":"device-1"}`))
 func (v *VoteJob) Perform(ctx context.Context, args []byte) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
 	var payload Payload
 	if err := json.Unmarshal(args, &payload); err != nil {
 		return fmt.Errorf("failed to unmarshal vote payload (offending: %s): %w", string(args), err)

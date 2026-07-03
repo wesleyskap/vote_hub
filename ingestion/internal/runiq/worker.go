@@ -21,9 +21,9 @@ type WorkerPool struct {
 // NewWorkerPool cria um novo pool de workers delegando internamente para a biblioteca Runiq.
 // Exemplo de uso:
 //   workerPool := runiq.NewWorkerPool(storage, 10)
-func NewWorkerPool(storage queue.WorkerPoolStorage, concurrency int) *WorkerPool {
+func NewWorkerPool(storage queue.WorkerPoolStorage, concurrency int, opts ...queue.WorkerOption) *WorkerPool {
 	return &WorkerPool{
-		pool: queue.NewWorkerPool(storage, concurrency),
+		pool: queue.NewWorkerPool(storage, concurrency, opts...),
 	}
 }
 

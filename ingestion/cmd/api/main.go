@@ -9,14 +9,16 @@ import (
 	"ingestion/internal/recaptcha"
 	"ingestion/internal/runiq"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/wesleyskap/orkai-runiq/v3/queue"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/lib/pq"
 )
 
 func main() {
 	// Logger estruturado JSON conforme style-skills.md
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	opts := &slog.HandlerOptions{Level: slog.LevelDebug}
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, opts))
 	slog.SetDefault(logger)
 
 	dbURL := os.Getenv("DATABASE_URL")
@@ -29,14 +31,18 @@ func main() {
 		recaptchaKey = "your_secret"
 	}
 
-	db, err := sql.Open("pgx", dbURL)
+	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		slog.Error("unable to open database connection", "err", err)
 		os.Exit(1)
 	}
 	defer db.Close()
 
-	storage, err := queue.NewPostgresStorage(db)
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     "redis:6379",
+		PoolSize: 1000,
+	})
+	storage, err := queue.NewRedisStorage(redisClient)
 	if err != nil {
 		slog.Error("unable to initialize postgres storage", "err", err)
 		os.Exit(1)

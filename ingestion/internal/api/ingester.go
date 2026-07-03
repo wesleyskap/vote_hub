@@ -37,6 +37,7 @@ func NewVoteIngester(enqueuer JobEnqueuer, verifier TokenVerifier) *VoteIngester
 func (h *VoteIngester) Ingest(c *fiber.Ctx) error {
 	var payload vote.Payload
 	if err := c.BodyParser(&payload); err != nil {
+		slog.Error("invalid payload format received", "err", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid payload"})
 	}
 
