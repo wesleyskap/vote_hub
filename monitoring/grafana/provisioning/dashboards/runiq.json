@@ -1,5 +1,9 @@
 {
   "title": "Runiq (Worker Pool)",
+  "uid": "bbb_runiq_dashboard",
+  "annotations": {
+    "list": []
+  },
   "panels": [
     {
       "type": "stat",
@@ -7,7 +11,7 @@
       "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
       "targets": [
         {
-          "expr": "runiq_jobs_count{queue=\"votes_queue\", status=\"pending\"}",
+          "expr": "max(runiq_jobs_count{queue=\"votes_queue\", status=\"pending\"})",
           "legendFormat": "Pending Jobs"
         }
       ]
@@ -18,7 +22,7 @@
       "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
       "targets": [
         {
-          "expr": "runiq_jobs_count{queue=\"votes_queue\", status=\"running\"}",
+          "expr": "max(runiq_jobs_count{queue=\"votes_queue\", status=\"running\"})",
           "legendFormat": "Active (Running)"
         }
       ]
@@ -29,7 +33,7 @@
       "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
       "targets": [
         {
-          "expr": "runiq_jobs_count{queue=\"votes_queue\", status=\"failed\"}",
+          "expr": "max(runiq_jobs_count{queue=\"votes_queue\", status=\"failed\"})",
           "legendFormat": "Failed Jobs"
         }
       ]
@@ -40,7 +44,7 @@
       "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
       "targets": [
         {
-          "expr": "runiq_jobs_count{queue=\"votes_queue\", status=\"processed\"}",
+          "expr": "max(runiq_jobs_count{queue=\"votes_queue\", status=\"processed\"})",
           "legendFormat": "Processed"
         }
       ]
@@ -51,7 +55,7 @@
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
       "targets": [
         {
-          "expr": "rate(runiq_jobs_count{queue=\"votes_queue\", status=\"processed\"}[1m])",
+          "expr": "max(rate(runiq_jobs_count{queue=\"votes_queue\", status=\"processed\"}[1m]))",
           "legendFormat": "Jobs/sec"
         }
       ]

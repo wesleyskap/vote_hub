@@ -1,5 +1,9 @@
 {
   "title": "SLI / Performance",
+  "uid": "bbb_sli_performance",
+  "annotations": {
+    "list": []
+  },
   "panels": [
     {
       "type": "timeseries",

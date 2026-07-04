@@ -1,5 +1,9 @@
 {
   "title": "Business / Paredão",
+  "uid": "bbb_business_dashboard",
+  "annotations": {
+    "list": []
+  },
   "panels": [
     {
       "type": "stat",
@@ -18,7 +22,7 @@
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
       "targets": [
         {
-          "expr": "sum(runiq_jobs_count{queue=\"votes_queue\", status=\"processed\"})",
+          "expr": "max(runiq_jobs_count{queue=\"votes_queue\", status=\"processed\"})",
           "legendFormat": "Processed Votes"
         }
       ]
