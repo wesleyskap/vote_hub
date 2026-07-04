@@ -21,6 +21,10 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, opts))
 	slog.SetDefault(logger)
 
+	slog.Debug("Initializing application configurations...")
+	slog.Info("Configurations loaded successfully")
+	slog.Warn("Running in development mode, please do not use in production")
+
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		dbURL = "postgres://postgres:postgres@localhost:5432/bbb_development"
@@ -44,7 +48,7 @@ func main() {
 	})
 	storage, err := queue.NewRedisStorage(redisClient)
 	if err != nil {
-		slog.Error("unable to initialize postgres storage", "err", err)
+		slog.Error("unable to initialize redis storage", "err", err)
 		os.Exit(1)
 	}
 

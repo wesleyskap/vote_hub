@@ -7,6 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 // JobEnqueuer define a interface mínima requerida pelo Ingester (Consumer-side Interface)
@@ -41,22 +42,38 @@ func (h *VoteIngester) Ingest(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid payload"})
 	}
 
-	// Early Returns: Indentidade máxima de 2 níveis
+	// Capitura ou gera TraceID para distributed tracing
+	traceID := c.Get("X-Trace-Id")
+	if traceID == "" {
+		// Import "github.com/google/uuid" para gerar trace ID
+		if u, err := uuid.NewRandom(); err == nil {
+			traceID = u.String()
+		} else {
+			traceID = "gen-error-fallback"
+		}
+	}
+	payload.TraceID = traceID
+
+	// Early Returns: Indentidade maxima de 2 niveis
 	if payload.ParedaoID == 0 || payload.ParticipantID == 0 {
+		slog.Error("ids are required", "trace_id", traceID, "paredao_id", payload.ParedaoID, "participant_id", payload.ParticipantID)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "ids are required"})
 	}
 
+	slog.Info("received vote request", "trace_id", traceID, "paredao_id", payload.ParedaoID, "participant_id", payload.ParticipantID)
+
 	ok, err := h.verifier.Verify(c.Context(), payload.RecaptchaToken, c.IP())
 	if err != nil || !ok {
-		slog.Warn("verification failed or suspect bot", "ip", c.IP(), "err", err)
+		slog.Warn("verification failed or suspect bot", "trace_id", traceID, "ip", c.IP(), "err", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bot protection triggered"})
 	}
 
 	rawPayload, _ := json.Marshal(payload)
 	if err := h.enqueuer.Enqueue(c.Context(), "votes_queue", "process_vote", rawPayload); err != nil {
-		slog.Error("failed to queue", "err", err.Error())
+		slog.Error("failed to queue", "trace_id", traceID, "err", err.Error())
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "service temporary busy"})
 	}
 
+	slog.Debug("vote enqueued successfully", "trace_id", traceID)
 	return c.SendStatus(fiber.StatusAccepted)
 }
