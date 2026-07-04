@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: ingestion-api
-        image: bbb-ingestion:v4
+        image: bbb-ingestion:v7
         imagePullPolicy: IfNotPresent
         command: ["/app/api"]
         ports:

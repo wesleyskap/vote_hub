@@ -1,0 +1,182 @@
+---
+# Promtail: coleta logs (stdout JSON) dos pods e envia ao Loki
+# Roda como DaemonSet para garantir cobertura em todos os nós do cluster
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-config
+  namespace: default
+data:
+  promtail-config.yaml: |
+    server:
+      http_listen_port: 9080
+      grpc_listen_port: 0
+
+    positions:
+      filename: /tmp/positions.yaml
+
+    clients:
+      - url: http://loki:3100/loki/api/v1/push
+
+    scrape_configs:
+      # Coleta stdout/stderr de todos os pods com labels específicos
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          # É CRÍTICO para o Promtail mapear o nó do pod para __host__ 
+          # para que o DaemonSet saiba quais pods estão no seu próprio nó.
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: __host__
+
+          # Mantém apenas pods do namespace default com os apps que nos interessam
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: default
+
+          # Filtra apenas os pods dos serviços de ingestão
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: ingestion-api|ingestion-worker
+
+          # Label "app" para filtrar no Grafana (ex: app="ingestion-worker")
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            target_label: app
+
+          # Label "pod" para identificar a instância exata
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+
+          # Label "namespace" para multi-namespace futuro
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+
+          # Label "container" para distinguir containers no mesmo pod
+          - source_labels: [__meta_kubernetes_pod_container_name]
+            target_label: container
+
+          # Caminho do log no nó (Docker/containerd padrão)
+          - source_labels: [__meta_kubernetes_pod_uid, __meta_kubernetes_pod_container_name]
+            target_label: __path__
+            replacement: /var/log/pods/*$1/*.log
+            separator: /
+
+        # Pipeline para parsear CRI-O containerd logs e depois o JSON estruturado do slog
+        pipeline_stages:
+          - cri: {} # Remove prefixo do containerd e expõe o JSON puro no campo 'message'
+          - json:
+              source: message
+              expressions:
+                level: level
+                msg: msg
+                time: time
+                trace_id: trace_id
+          - labels:
+              level:
+              trace_id:
+          - timestamp:
+              source: time
+              format: RFC3339Nano
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: promtail
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: promtail
+  template:
+    metadata:
+      labels:
+        app: promtail
+    spec:
+      serviceAccountName: promtail
+      containers:
+        - name: promtail
+          image: grafana/promtail:3.3.2
+          args:
+            - -config.file=/etc/promtail/promtail-config.yaml
+          env:
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          ports:
+            - containerPort: 9080
+              name: http
+          volumeMounts:
+            - name: promtail-config
+              mountPath: /etc/promtail
+            # Acesso aos logs dos containers no nó host
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+            - name: varlibdockercontainers
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+      tolerations:
+        # Tolera nós com taints para garantir DaemonSet em todos os nós
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+      volumes:
+        - name: promtail-config
+          configMap:
+            name: promtail-config
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+---
+# RBAC: permissões mínimas para o Promtail descobrir pods via Kubernetes SD
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: promtail
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: promtail
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "pods", "namespaces"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: promtail
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: promtail
+subjects:
+  - kind: ServiceAccount
+    name: promtail
+    namespace: default
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: promtail
+  namespace: default
+spec:
+  selector:
+    app: promtail
+  ports:
+    - protocol: TCP
+      port: 9080
+      targetPort: 9080
+

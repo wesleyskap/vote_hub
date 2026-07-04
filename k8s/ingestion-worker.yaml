@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: ingestion-worker
-        image: bbb-ingestion:v5
+        image: bbb-ingestion:v7
         imagePullPolicy: IfNotPresent
         command: ["/app/worker"]
         ports:
