@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // SetupRouter inicializa a API de Ingestão configurando o Rate Limiter
@@ -22,9 +23,9 @@ func SetupRouter(ingester *VoteIngester) *fiber.App {
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
-	prometheus := fiberprometheus.New("bbb_ingestion_api")
-	prometheus.RegisterAt(app, "/metrics")
-	app.Use(prometheus.Middleware)
+	prometheusMiddleware := fiberprometheus.NewWithRegistry(prometheus.DefaultRegisterer, "bbb_ingestion_api", "http", "", nil)
+	prometheusMiddleware.RegisterAt(app, "/metrics")
+	app.Use(prometheusMiddleware.Middleware)
 
 	// Rate Limiter: Bloqueia IPs que excedem 10 requisições por segundo
 	app.Use(limiter.New(limiter.Config{

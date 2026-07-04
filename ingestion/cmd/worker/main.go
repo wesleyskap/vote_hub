@@ -37,8 +37,8 @@ func main() {
 		slog.Error("worker unable to open database connection", "err", err)
 		os.Exit(1)
 	}
-	db.SetMaxOpenConns(30)
-	db.SetMaxIdleConns(30)
+	db.SetMaxOpenConns(100)
+	db.SetMaxIdleConns(100)
 
 	defer db.Close()
 
@@ -52,25 +52,29 @@ func main() {
 		os.Exit(1)
 	}
 
-	voteJob := vote.NewVoteJob(db)
+	// Buffer de agregação: flush a cada 5s ou quando acumular 500 chaves únicas
+	aggBuffer := vote.NewAggregationBuffer(db, 5*time.Second, 500)
+	go aggBuffer.Start(ctx)
+
+	voteJob := vote.NewVoteJob(db, aggBuffer)
 
 	// Configuração do dynamic concurrency (autoscaling)
-	// Começa em 5, escala até 30, checa a cada 5 segundos
+	// Começa em 15, escala até 100, checa a cada 5 segundos
 	dynConfig := queue.DynamicConcurrencyConfig{
 		CheckInterval:   5 * time.Second,
-		MinConcurrency:  5,
-		MaxConcurrency:  30,
+		MinConcurrency:  15,
+		MaxConcurrency:  100,
 		QueueDepthLimit: 20,
-		ScaleUpStep:     5,
+		ScaleUpStep:     10,
 		ScaleDownStep:   2,
 	}
 
 	// Inicializa o WorkerPool com autoscaling e leader election
 	workerPool := runiq.NewWorkerPool(
 		storage,
-		5,
+		dynConfig.MinConcurrency,
 		queue.WithDynamicConcurrency(dynConfig),
-		queue.WithLeaderElection(30 * time.Second),
+		queue.WithLeaderElection(30*time.Second),
 	)
 	workerPool.Register("process_vote", voteJob)
 
@@ -83,7 +87,12 @@ func main() {
 		}
 	}()
 
-	slog.Info("starting Runiq Worker Pool for votes with autoscaling (min=5, max=30)")
+	slog.Info("starting Runiq Worker Pool for votes with autoscaling",
+		"minConcurrency", dynConfig.MinConcurrency,
+		"maxConcurrency", dynConfig.MaxConcurrency,
+		"aggFlushInterval", "5s",
+		"aggFlushSize", 500,
+	)
 	if err := workerPool.Start(ctx, "votes_queue"); err != nil {
 		slog.Error("worker pool stopped with error", "err", err)
 	}
