@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: ingestion-api
 spec:
-  replicas: 3
+  replicas: 5
   selector:
     matchLabels:
       app: ingestion-api
@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: ingestion-api
-        image: bbb-ingestion:local
+        image: bbb-ingestion:v4
         imagePullPolicy: IfNotPresent
         command: ["/app/api"]
         ports:
@@ -26,21 +26,24 @@ spec:
           value: "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
         resources:
           requests:
-            cpu: "200m"
-            memory: "128Mi"
-          limits:
             cpu: "500m"
             memory: "256Mi"
+          limits:
+            cpu: "1500m"
+            memory: "512Mi"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: ingestion-api
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
-  - port: 8080
+  - name: default
+    port: 8080
     targetPort: 8080
-    nodePort: 30080
+  - name: k6-compat
+    port: 30080
+    targetPort: 8080
   selector:
     app: ingestion-api

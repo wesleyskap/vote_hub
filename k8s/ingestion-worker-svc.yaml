@@ -3,9 +3,9 @@ kind: Service
 metadata:
   name: ingestion-worker
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
-  - port: 8081
-    nodePort: 30081
+  - port: 8082
+    targetPort: 8081
   selector:
     app: ingestion-worker

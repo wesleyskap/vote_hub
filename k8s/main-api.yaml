@@ -14,8 +14,9 @@ spec:
     spec:
       containers:
       - name: main-api
-        image: bbb-main-api:local
+        image: bbb-main-api:v2
         imagePullPolicy: IfNotPresent
+        command: ["/bin/bash", "-c", "bundle exec rails db:prepare db:seed && exec ./bin/thrust ./bin/rails server"]
         ports:
         - containerPort: 80
         env:
@@ -50,10 +51,9 @@ kind: Service
 metadata:
   name: main-api
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
-  - port: 80
+  - port: 3001
     targetPort: 80
-    nodePort: 30001
   selector:
     app: main-api

@@ -27,6 +27,16 @@ data:
           - source_labels: [__meta_kubernetes_pod_label_app]
             target_label: job
           
+          # Traduzir hífens para underscores para manter compatibilidade com os dashboards
+          - source_labels: [job]
+            regex: ingestion-api
+            replacement: ingestion_api
+            target_label: job
+          - source_labels: [job]
+            regex: ingestion-worker
+            replacement: ingestion_worker
+            target_label: job
+          
           # Salvar o nome do pod
           - source_labels: [__meta_kubernetes_pod_name]
             target_label: pod

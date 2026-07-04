@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: ingestion-worker
 spec:
-  replicas: 3
+  replicas: 5
   selector:
     matchLabels:
       app: ingestion-worker
@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: ingestion-worker
-        image: bbb-ingestion:local
+        image: bbb-ingestion:v5
         imagePullPolicy: IfNotPresent
         command: ["/app/worker"]
         ports:
@@ -29,13 +29,4 @@ spec:
           limits:
             cpu: "500m"
             memory: "256Mi"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: ingestion-worker
-spec:
-  ports:
-  - port: 8081
-  selector:
-    app: ingestion-worker
+
