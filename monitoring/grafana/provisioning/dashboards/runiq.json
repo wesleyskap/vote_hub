@@ -1,0 +1,61 @@
+{
+  "title": "Runiq (Worker Pool)",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Fila Pending",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "runiq_jobs_count{queue=\"votes_queue\", status=\"pending\"}",
+          "legendFormat": "Pending Jobs"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Active Jobs",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        {
+          "expr": "runiq_jobs_count{queue=\"votes_queue\", status=\"running\"}",
+          "legendFormat": "Active (Running)"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Dead Jobs / Failed",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "runiq_jobs_count{queue=\"votes_queue\", status=\"failed\"}",
+          "legendFormat": "Failed Jobs"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Processed Total",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "expr": "runiq_jobs_count{queue=\"votes_queue\", status=\"processed\"}",
+          "legendFormat": "Processed"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Worker Throughput (Jobs/sec)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "expr": "rate(runiq_jobs_count{queue=\"votes_queue\", status=\"processed\"}[1m])",
+          "legendFormat": "Jobs/sec"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39
+}

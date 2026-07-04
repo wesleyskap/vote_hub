@@ -1,0 +1,28 @@
+{
+  "title": "Business / Paredão",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total Votes (API Ingested)",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(http_requests_total{job=\"ingestion_api\", status_code=\"202\"})",
+          "legendFormat": "Total Votes"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total Valid Votes Processed (Worker)",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(runiq_jobs_count{queue=\"votes_queue\", status=\"processed\"})",
+          "legendFormat": "Processed Votes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39
+}

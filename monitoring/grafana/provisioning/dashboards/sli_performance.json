@@ -1,0 +1,54 @@
+{
+  "title": "SLI / Performance",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Request Throughput (QPS)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"ingestion_api\"}[1m])) by (method, path, status_code)",
+          "legendFormat": "{{method}} {{path}} ({{status_code}})"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency SLI (P95) - Target < 50ms",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"ingestion_api\"}[1m])) by (le)) * 1000",
+          "legendFormat": "P95 Latency (ms)"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP Error Rate (500s / 429s)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"ingestion_api\", status_code=~\"5..|429\"}[1m]))",
+          "legendFormat": "Error Rate (req/s)"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Go Goroutines / Heap (Memory)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "go_goroutines{job=\"ingestion_api\"}",
+          "legendFormat": "Goroutines"
+        },
+        {
+          "expr": "go_memstats_heap_alloc_bytes{job=\"ingestion_api\"} / 1024 / 1024",
+          "legendFormat": "Heap Alloc (MB)"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39
+}
