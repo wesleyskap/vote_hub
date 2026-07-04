@@ -8,7 +8,7 @@ services:
     working_dir: /app
     volumes:
       - ./frontend:/app
-    command: npm run dev
+    command: sh -c "npm install && npm run dev"
     ports:
       - "3000:3000"
     environment:
@@ -19,19 +19,36 @@ services:
 
   # 2. Vote Ingestion API (Go)
   ingestion-api:
-    image: golang:1.22-alpine
+    image: golang:1.26-alpine
     container_name: bbb_ingestion_api
     working_dir: /app
     volumes:
       - ./ingestion:/app
-    command: go run main.go
+    command: go run cmd/api/main.go
     ports:
       - "8080:8080"
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/bbb_development
-      - RECAPTCHA_SECRET_KEY=your_secret
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/bbb_development?sslmode=disable
+      - RECAPTCHA_SECRET_KEY=6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe
     depends_on:
       - postgres
+      - redis
+
+  # 2.1 Vote Worker (Go)
+  ingestion-worker:
+    image: golang:1.26-alpine
+    container_name: bbb_ingestion_worker
+    working_dir: /app
+    volumes:
+      - ./ingestion:/app
+    command: go run cmd/worker/main.go
+    ports:
+      - "8082:8081"
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/bbb_development?sslmode=disable
+    depends_on:
+      - postgres
+      - redis
 
   # 3. Main API (Ruby on Rails 8)
   main-api:
@@ -50,6 +67,16 @@ services:
 
 
 
+  # 4. Teste de Carga: K6
+  k6:
+    image: grafana/k6:latest
+    container_name: bbb_k6
+    volumes:
+      - ./k6:/scripts
+    command: run /scripts/load_test.js
+    depends_on:
+      - ingestion-api
+
   # 5. Banco de Dados Relacional
   postgres:
     image: postgres:16-alpine
@@ -62,6 +89,12 @@ services:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: bbb_redis
+    ports:
+      - "6379:6379"
 
   # 6. Monitoramento: Prometheus
   prometheus:
@@ -83,6 +116,8 @@ services:
       - "3003:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
 
