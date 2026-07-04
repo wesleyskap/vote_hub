@@ -15,7 +15,7 @@ export const Dashboard: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      const data = await fetchRails<AdminStats>('/admin/api/v1/stats');
+      const data = await fetchRails<AdminStats>('/admin/v1/stats');
       setStats(data);
       setError(null);
     } catch (err: any) {
