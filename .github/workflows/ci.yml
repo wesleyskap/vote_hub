@@ -24,6 +24,7 @@ jobs:
         env:
           GOPROXY: direct
           GOSUMDB: off
+          GOTOOLCHAIN: local
         run: |
           cd ingestion
           go test ./... -v

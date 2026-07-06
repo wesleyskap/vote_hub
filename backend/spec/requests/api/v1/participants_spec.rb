@@ -14,6 +14,10 @@ RSpec.describe "APIs de Votacao", type: :request do
 
   describe "GET /api/v1/participants" do
     it "deve retornar a lista de participantes cadastrados com sucesso" do
+      paredao = Paredao.create!(status: "active")
+      ParedaoParticipant.create!(paredao: paredao, participant: participant_1)
+      ParedaoParticipant.create!(paredao: paredao, participant: participant_2)
+
       get "/api/v1/participants"
       expect(response).to have_http_status(:ok)
       
