@@ -43,7 +43,7 @@ Write-Host "  - Promtail (Service Discovery):    http://localhost:9080/service-d
 Write-Host "---------------------------------------------------------" -ForegroundColor Gray
 Write-Host "Testes:" -ForegroundColor Magenta
 Write-Host "Para simular um erro no Ingestion Worker (aparecerá no Grafana Loki), execute:" -ForegroundColor Yellow
-Write-Host ".\general\simulate_error.ps1" -ForegroundColor White
+Write-Host ".\simulate_error.ps1" -ForegroundColor White
 Write-Host "---------------------------------------------------------" -ForegroundColor Gray
 Write-Host "Para encerrar todos os port-forwards a qualquer momento, execute:" -ForegroundColor Yellow
 Write-Host "Stop-Process -Name kubectl -Force" -ForegroundColor White

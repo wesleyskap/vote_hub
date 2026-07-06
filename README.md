@@ -175,4 +175,4 @@ npm run test
   Stop-Process -Name kubectl -Force
   ```
 - **Erro de integridade em banco ao testar falhas:**
-  Rode `.\general\simulate_error.ps1` para forçar um voto inválido. O erro de Foreign Key Violation gerado no banco deve ser listado nos logs do Loki utilizando o filtro `{app="ingestion-worker"} |= "ERROR"`.
+  Rode `.\simulate_error.ps1` para forçar um voto inválido. O erro de Foreign Key Violation gerado no banco deve ser listado nos logs do Loki utilizando o filtro `{app="ingestion-worker"} |= "ERROR"`.

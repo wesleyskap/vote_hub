@@ -30,7 +30,7 @@ echo "  - Promtail (Service Discovery):    http://localhost:9080/service-discove
 echo "---------------------------------------------------------"
 echo "Testes:"
 echo "Para simular um erro no Ingestion Worker (aparecerá no Grafana Loki), execute:"
-echo "pwsh ./general/simulate_error.ps1"
+echo "pwsh ./simulate_error.ps1"
 echo "---------------------------------------------------------"
 echo "Para encerrar todos os port-forwards a qualquer momento, execute:"
 echo "killall kubectl"
