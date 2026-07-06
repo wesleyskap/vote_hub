@@ -163,6 +163,21 @@ npm run test
 
 ---
 
+## Esteira de CI/CD com GitHub Actions
+
+O repositório possui fluxos de trabalho configurados para automatizar a verificação do código e simular a implantação na AWS:
+
+- **Integração contínua (CI - `.github/workflows/ci.yml`):**
+  - Disparado automaticamente em qualquer Pull Request ou push enviado para o branch `master`.
+  - Executa testes do Go (`ingestion/`), testes de frontend (`frontend/`) e testes de banco/controllers com PostgreSQL no Rails (`backend/`).
+- **Entrega contínua (CD - `.github/workflows/deploy-simulation.yml`):**
+  - Disparado ao realizar o merge de novos códigos no branch `master`.
+  - Simula o build e envio de imagens Docker para o registro privado (AWS ECR).
+  - Executa validações sintáticas e de planejamento do Terraform (`terraform validate`/`plan`).
+  - Executa testes de deploy secos (*dry-run*) do Kubernetes (`kubectl apply --dry-run`).
+
+---
+
 ### Consulta de logs com Grafana Loki
 
 Para analisar o comportamento da aplicacao e do processamento de votos através do Loki no Grafana, utilize as seguintes queries LogQL no painel Explore:

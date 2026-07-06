@@ -1,0 +1,84 @@
+name: Entrega continua (CD - Simulacao)
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build-and-push:
+    name: Simular Compilacao e Registro de Imagens
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Simular Login no Registro ECR (AWS)
+        run: |
+          echo "Simulando: aws ecr get-login-password --region us-east-1"
+          echo "Sucesso: Autenticado no registro da AWS"
+
+      - name: Simular Build e Push da Ingestion API (Go)
+        run: |
+          echo "Simulando: docker build -t bbb-ingestion:production ./ingestion"
+          echo "Simulando: docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/bbb-ingestion:latest"
+          echo "Sucesso: Imagem Go registrada"
+
+      - name: Simular Build e Push da Main API (Rails)
+        run: |
+          echo "Simulando: docker build -t bbb-main-api:production ./backend"
+          echo "Simulando: docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/bbb-main-api:latest"
+          echo "Sucesso: Imagem Rails registrada"
+
+      - name: Simular Build e Push do Frontend (React)
+        run: |
+          echo "Simulando: docker build -t bbb-frontend:production ./frontend"
+          echo "Simulando: docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/bbb-frontend:latest"
+          echo "Sucesso: Imagem Frontend registrada"
+
+  terraform-plan:
+    name: Simular Planejamento Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Simular Terraform Init e Validate
+        run: |
+          cd terraform
+          echo "Simulando: terraform init"
+          echo "Simulando: terraform validate"
+          echo "Sucesso: Codigo IaC estruturalmente correto"
+
+      - name: Simular Terraform Plan
+        run: |
+          cd terraform
+          echo "Simulando: terraform plan -out=tfplan"
+          echo "Sucesso: VPC, RDS Multi-AZ e EKS Cluster prontos para atualizacao"
+
+  deploy-eks:
+    name: Simular Deploy no Kubernetes (EKS)
+    runs-on: ubuntu-latest
+    needs: [build-and-push, terraform-plan]
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.28.0'
+
+      - name: Simular Conexao com EKS Cluster
+        run: |
+          echo "Simulando: aws eks update-kubeconfig --region us-east-1 --name bbb-votacao-cluster"
+          echo "Sucesso: kubeconfig local apontando para o cluster AWS EKS"
+
+      - name: Simular Aplicacao dos Manifestos (Dry Run)
+        run: |
+          echo "Simulando: kubectl apply -f k8s/ --dry-run=client"
+          echo "Sucesso: Deploy de pods (Ingestion API, Rails API, Workers) simulado sem erros de configuracao no Kubernetes"

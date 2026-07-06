@@ -1,0 +1,88 @@
+name: Integracao continua (CI)
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test-go:
+    name: Testes Ingestao (Go)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: ingestion/go.sum
+
+      - name: Rodar testes unitarios
+        run: |
+          cd ingestion
+          go test ./... -v
+
+  test-rails:
+    name: Testes Backend (Rails)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: bbb_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Ruby
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      - name: Instalar dependencias do Rails
+        run: |
+          cd backend
+          gem install bundler
+          bundle install --jobs 4 --retry 3
+
+      - name: Preparar banco de dados e rodar testes
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost:5432/bbb_test
+          RAILS_ENV: test
+        run: |
+          cd backend
+          bundle exec rails db:prepare
+          bundle exec rspec
+
+  test-react:
+    name: Testes Frontend (React)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias e rodar testes
+        run: |
+          cd frontend
+          npm install
+          npm run test
