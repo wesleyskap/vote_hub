@@ -17,7 +17,7 @@ The system simulates a reality show eviction night where the audience votes on t
 
 ### Directory structure and scope
 The repository is structured into the following main directories:
-- **`ingestion/`**: Contains the Go (Golang) API responsible for receiving votes via HTTP and the background worker consuming Redis queues to insert data into PostgreSQL.
+- **`ingestion/`**: Contains the Go (Golang) API responsible for receiving votes via HTTP and the background worker consuming Redis queues using the [Orkai Runiq](https://github.com/wesleyskap/orkai-runiq) library to insert data into PostgreSQL.
 - **`backend/`**: Contains the administrative API developed in Ruby on Rails 8, responsible for managing the relational database schema and exposing read endpoints for consolidated reports.
 - **`frontend/`**: Contains the web application developed in React, structured using stateless custom hooks.
 - **`k8s/`**: Manifests for infrastructure resources, services, monitoring (Loki/Grafana/Prometheus), and load-testing scripts configured for Kubernetes.

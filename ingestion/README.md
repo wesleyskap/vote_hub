@@ -11,7 +11,7 @@ A Ingestion API é a única interface de gravação exposta para o mundo externo
   - **Mecanismos críticos:** 
     1. **Rate Limiter de Memória:** O Fiber intercepta a chamada limitando a 10 requisições por segundo por IP. Se exceder, retorna `429 Too Many Requests`.
     2. **Integração reCAPTCHA:** O token é despachado via HTTP POST para a API do Google para aferir a validade do usuário.
-    3. **Enfileiramento (Enqueue):** Se o voto for íntegro, um `Trace ID` único é gerado (para rastreabilidade no Grafana Loki) e o payload é submetido à fila do Redis usando o ecossistema Runiq. O cliente recebe uma resposta HTTP `202 Accepted` em menos de ~5ms, isolando-o completamente de latências do banco de dados.
+    3. **Enfileiramento (Enqueue):** Se o voto for íntegro, um `Trace ID` único é gerado (para rastreabilidade no Grafana Loki) e o payload é submetido à fila do Redis usando a biblioteca [Orkai Runiq](https://github.com/wesleyskap/orkai-runiq). O cliente recebe uma resposta HTTP `202 Accepted` em menos de ~5ms, isolando-o completamente de latências do banco de dados.
 
 - `GET /metrics`
   - **Função:** Rota não-autenticada consumida exclusivamente pela infraestrutura (Prometheus) para coleta do SLI de telemetria da aplicação Go.
@@ -22,7 +22,7 @@ A Ingestion API é a única interface de gravação exposta para o mundo externo
 2. **Desacoplamento via mensageria (Redis):** A API não escreve diretamente no banco de dados. A validação do voto ocorre em milissegundos, com o payload empilhado na memória do Redis, liberando o cliente imediatamente e evitando gargalos de I/O em picos de 1.000 a 7.500 votos por segundo.
 3. **Padrão de worker e bulk insert:** O worker consome a fila do Redis e agrega os votos em memória (Aggregation buffer). Os agrupamentos são inseridos em lote no banco de dados (Bulk Inserts), reduzindo milhares de transações para apenas uma.
    - *Como funciona no código (`ingestion/internal/vote/aggregation_buffer.go`):* O Worker possui um `map[aggKey]int64` protegido por um `sync.Mutex`. Ao invés de fazer um `INSERT` a cada voto do Redis, ele faz `buffer.counts[key]++`. Um *Ticker* em background consolida a memória e escreve de uma vez usando `INSERT INTO ... ON CONFLICT DO UPDATE`. O banco de dados recebe 1 transação por segundo em vez de milhares.
-4. **Motor Orkai Runiq:** Gerencia a pool de workers, fornecendo retry automático nativo e roteamento para uma Dead Letter Queue (DLQ) em falhas permanentes (ex: violação de Foreign Key).
+4. **Motor [Orkai Runiq](https://github.com/wesleyskap/orkai-runiq):** Gerencia a pool de workers, fornecendo retry automático nativo e roteamento para uma Dead Letter Queue (DLQ) em falhas permanentes (ex: violação de Foreign Key).
 
 ## Estrutura de pastas
 
@@ -30,7 +30,7 @@ A Ingestion API é a única interface de gravação exposta para o mundo externo
 ingestion/
 ├── cmd/
 │   ├── api/          # Ponto de entrada da API HTTP de ingestão. Inicializa o roteador Fiber.
-│   └── worker/       # Ponto de entrada do Worker Runiq. Conecta no Redis e banco.
+│   └── worker/       # Ponto de entrada do Worker [Orkai Runiq](https://github.com/wesleyskap/orkai-runiq). Conecta no Redis e banco.
 ├── internal/
 │   ├── api/          # Lógica de rotas e validações do HTTP (handlers).
 │   └── vote/         # Core business: Definição dos payloads, filas, Aggregation Buffer e persistência.
@@ -42,12 +42,12 @@ ingestion/
 - **Go** 1.26
 - **Fiber** v2 (framework web de alta performance)
 - **Redis Go Client** v9 (interação assíncrona de fila)
-- **Orkai Runiq** v3 (gerenciador de background jobs e DLQ)
+- **[Orkai Runiq](https://github.com/wesleyskap/orkai-runiq)** v3 (gerenciador de background jobs e DLQ)
 - **PostgreSQL Driver** (`github.com/lib/pq` para bulk inserts)
 - 
 ## Componentes
 
-- **Ingestion API**: Serviço de borda de altíssima vazão. Responsável por receber as requisições HTTP de votos, realizar validações em tempo real (como IDs nulos e tokens de bot) e encaminhar as mensagens de forma assíncrona para a fila do Redis utilizando o motor Runiq. Essa API não faz escritas diretas no banco relacional.
+- **Ingestion API**: Serviço de borda de altíssima vazão. Responsável por receber as requisições HTTP de votos, realizar validações em tempo real (como IDs nulos e tokens de bot) e encaminhar as mensagens de forma assíncrona para a fila do Redis utilizando o motor [Orkai Runiq](https://github.com/wesleyskap/orkai-runiq). Essa API não faz escritas diretas no banco relacional.
 - **Ingestion worker**: Um processo operário distribuído e auto-escalável que ouve o Redis. Ele agrega a contagem de votos diretamente em um buffer de memória e os insere no banco de dados em lote (Bulk Insert) em um fluxo controlado.
 
 ## Mapeamento de rotas (Ingestion API)
@@ -57,7 +57,7 @@ ingestion/
   - **Mecanismos críticos:**
     1. **Rate Limiter de Memória:** O Fiber intercepta a chamada limitando a 10 requisições por segundo por IP. Se exceder, retorna `429 Too Many Requests`.
     2. **Integração reCAPTCHA:** O token é despachado via HTTP POST para a API do Google para aferir a validade do usuário.
-    3. **Enfileiramento (Enqueue):** Se o voto for íntegro, um `Trace ID` único é gerado (para rastreabilidade no Loki) e o payload é submetido à fila do Redis usando o Runiq. O cliente recebe uma resposta HTTP `202 Accepted` em menos de ~5ms.
+    3. **Enfileiramento (Enqueue):** Se o voto for íntegro, um `Trace ID` único é gerado (para rastreabilidade no Loki) e o payload é submetido à fila do Redis usando a biblioteca [Orkai Runiq](https://github.com/wesleyskap/orkai-runiq). O cliente recebe uma resposta HTTP `202 Accepted` em menos de ~5ms.
 
 - `GET /metrics`
   - **Função:** Rota consumida pelo Prometheus para coleta de telemetria da aplicação Go.

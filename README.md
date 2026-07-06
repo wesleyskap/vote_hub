@@ -19,7 +19,7 @@ O sistema simula um paredão de reality show onde o público vota nos participan
 
 ### Divisão de pastas e escopo
 O repositório está estruturado nos seguintes diretórios principais:
-- **`ingestion/`**: Contém a API em Go (Golang) responsável por receber os votos via HTTP e o worker de processamento que ouve as filas do Redis e insere dados no PostgreSQL.
+- **`ingestion/`**: Contém a API em Go (Golang) responsável por receber os votos via HTTP e o worker de processamento que ouve as filas do Redis utilizando a biblioteca [Orkai Runiq](https://github.com/wesleyskap/orkai-runiq) e insere os dados no PostgreSQL.
 - **`backend/`**: Contém a API administrativa desenvolvida em Ruby on Rails 8, responsável por manter o schema do banco de dados relacional e expor as rotas de leitura dos relatórios consolidados.
 - **`frontend/`**: Contém a aplicação web desenvolvida em React e estruturada por meio de hooks sem estado (stateless) reutilizáveis.
 - **`k8s/`**: Manifesto de recursos, serviços, monitoramento (Loki/Grafana/Prometheus) e testes de estresse estruturados para o Kubernetes.
@@ -160,6 +160,24 @@ Testa as abstrações do cliente de rede e o estado lógico do hook useVote com 
 cd frontend
 npm run test
 ```
+
+---
+
+### Consulta de logs com Grafana Loki
+
+Para analisar o comportamento da aplicacao e do processamento de votos através do Loki no Grafana, utilize as seguintes queries LogQL no painel Explore:
+
+- **Logs do worker filtrados por severidade (apenas erros):**
+  `{app="ingestion-worker"} | json | level="ERROR"`
+- **Buscar ciclo completo de um voto usando o Trace ID:**
+  `{app=~"ingestion-.*"} | json | trace_id="COLE_O_TRACE_ID_AQUI"`
+
+Filtros rapidos sugeridos:
+- `{app="ingestion-worker"}`: logs gerais do worker.
+- `{app="ingestion-api"}`: logs gerais da API de ingestao.
+- `{app="ingestion-worker"} |= "ERROR"`: busca textual simples por erros no worker.
+- `{app="ingestion-worker"} | json | level="WARN"`: apenas logs com severidade de warning no worker.
+- `{app=~"ingestion-.*"} | json | level="ERROR"`: logs com severidade de erro de todas as aplicacoes da ingestao.
 
 ---
 
