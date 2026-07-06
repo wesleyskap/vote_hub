@@ -23,7 +23,8 @@ func SetupRouter(ingester *VoteIngester) *fiber.App {
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
-	prometheusMiddleware := fiberprometheus.NewWithRegistry(prometheus.DefaultRegisterer, "bbb_ingestion_api", "http", "", nil)
+	reg := prometheus.NewRegistry()
+	prometheusMiddleware := fiberprometheus.NewWithRegistry(reg, "bbb_ingestion_api", "http", "", nil)
 	prometheusMiddleware.RegisterAt(app, "/metrics")
 	app.Use(prometheusMiddleware.Middleware)
 

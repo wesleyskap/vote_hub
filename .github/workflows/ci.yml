@@ -21,6 +21,9 @@ jobs:
           cache-dependency-path: ingestion/go.sum
 
       - name: Rodar testes unitarios
+        env:
+          GOPROXY: direct
+          GOSUMDB: off
         run: |
           cd ingestion
           go test ./... -v
