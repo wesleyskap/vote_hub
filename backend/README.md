@@ -79,6 +79,9 @@ docker compose exec main-api bundle exec rails db:seed
 
 # Listar todas as rotas ativas da aplicação
 docker compose exec main-api bundle exec rails routes
+
+# Executar a suíte de testes automatizados com RSpec
+docker compose exec main-api bundle exec rspec
 ```
 
 ## Troubleshooting (Resolução de problemas)

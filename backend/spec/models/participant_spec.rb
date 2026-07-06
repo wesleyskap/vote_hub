@@ -2,12 +2,12 @@ require 'rails_helper'
 
 RSpec.describe Participant, type: :model do
   describe 'Validações' do
-    it 'é válido com nome presente (Fast & Independent)' do
+    it 'deve ser válido com nome presente (Fast & Independent)' do
       participant = Participant.new(name: 'Beatriz', avatar_url: 'http://img.com/b.jpg')
       expect(participant).to be_valid
     end
 
-    it 'é inválido sem nome' do
+    it 'deve ser inválido sem nome' do
       participant = Participant.new(name: nil)
       expect(participant).not_to be_valid
       expect(participant.errors[:name]).to include("can't be blank")
@@ -15,7 +15,7 @@ RSpec.describe Participant, type: :model do
   end
 
   describe 'Relacionamentos' do
-    it 'pode participar de vários paredões' do
+    it 'deve poder participar de vários paredões' do
       assoc = described_class.reflect_on_association(:paredaos)
       expect(assoc.macro).to eq :has_many
     end

@@ -136,6 +136,33 @@ kubectl logs -f job/k6-heavy-test -c k6
 
 ---
 
+## Como executar os testes unitários e de integração
+
+Você pode rodar os testes automatizados em cada ponta do projeto usando os comandos abaixo:
+
+### Ingestão (Go)
+Testa a API HTTP de votos e o processamento em lote do banco de dados (usando mocks/sqlmock).
+```bash
+cd ingestion
+go test ./... -v
+```
+
+### Backend (Ruby on Rails)
+Testa as regras dos modelos de participantes e os controllers de API REST com RSpec.
+```bash
+# Com o ambiente docker-compose ativo
+docker compose exec main-api bundle exec rspec
+```
+
+### Frontend (React)
+Testa as abstrações do cliente de rede e o estado lógico do hook useVote com Vitest.
+```bash
+cd frontend
+npm run test
+```
+
+---
+
 ### Diagnóstico de problemas (Troubleshooting)
 
 - **Loki offline ou "Failed to load log volume":**

@@ -79,8 +79,8 @@ go run cmd/api/main.go
 # Executar o Worker de consumo localmente (fora do Docker)
 go run cmd/worker/main.go
 
-# Rodar todos os testes unitários do Go
-go test ./...
+# Rodar todos os testes unitários e de integração do Go
+go test ./... -v
 ```
 
 ## Troubleshooting (Resolução de problemas)

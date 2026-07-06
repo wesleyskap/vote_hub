@@ -62,6 +62,9 @@ npm run dev
 
 # Gerar o bundle de produção otimizado na pasta dist/
 npm run build
+
+# Executar a suíte de testes com Vitest
+npm run test
 ```
 
 ## Troubleshooting (Resolução de problemas)
