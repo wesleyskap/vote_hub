@@ -4,6 +4,17 @@ Todas as mudancas e evolucoes deste projeto serao documentadas neste arquivo. O 
 
 ---
 
+## [1.0.5] - 2026-07-06
+
+### Documentacao
+- Expandido o `README.md` com tabela de pre-requisitos, versoes minimas e contexto de uso por ferramenta (Docker, kubectl, Go, Ruby).
+- Fluxo de execucao local reestruturado em dois metodos: **Metodo A (Kubernetes)** com 5 passos detalhados e **Metodo B (Docker Compose)** com 4 passos e exemplos `curl` prontos para validacao.
+- Adicionada tabela de enderecos locais com todos os servicos disponiveis apos os port-forwards do Kubernetes (Frontend, Main API, Ingestion API, Grafana, Runiq, Promtail).
+- Incluido exemplo do relatorio de saida customizado do K6 e instrucao de como reexecutar o teste apos uma rodada anterior.
+- Secao de testes reescrita com duas opcoes: sem Docker (com as variaveis de ambiente necessarias para Rails) e com Docker Compose (sem necessidade de Go, Ruby ou Node instalados localmente).
+
+---
+
 ## [1.0.4] - 2026-07-06
 
 ### Corrigido
