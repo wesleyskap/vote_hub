@@ -75,7 +75,7 @@ A lógica de submissão do voto, controle do reCAPTCHA e obtenção do fingerpri
 
 ## Como subir uma cópia deste ambiente localmente
 
-### Parar serviços conflitantes
+### 1. Parar serviços conflitantes
 Certifique-se de liberar as portas do seu host local limpando execuções anteriores:
 ```bash
 # Derruba containers ativos do compose
@@ -90,27 +90,17 @@ Stop-Process -Name kubectl -Force
 killall kubectl
 ```
 
-### Executando com Docker compose
-Recomendado para testes simples locais.
-```bash
-# Sobe banco, APIs, frontend e filas
-docker-compose up --build -d
+### 2. Configuração e deploy com Kubernetes (Método Principal)
+Para executar a aplicação no ecossistema completo simulando o ambiente de produção, é obrigatório possuir um cluster do Kubernetes ativo e configurado (como **Docker Desktop Kubernetes**, **Minikube** ou **Kind**).
 
-# Prepara as tabelas e adiciona massa de testes
-docker compose exec main-api bundle exec rails db:prepare db:seed
-```
-
-### Executando com Kubernetes
-Recomendado para simulação de produção e testes de estresse.
-
-#### Compilar as imagens
-Gere os binários sob a tag local para que o cluster K8s possa consumi-los:
+#### Compilar as imagens locais
+Gere os binários sob a tag local para que o seu cluster possa consumi-los:
 ```bash
 docker build -t bbb-ingestion:local ./ingestion
 docker build -t bbb-main-api:local ./backend
 docker build -t bbb-frontend:local ./frontend
 ```
-*(Nota: Se usar Minikube, execute primeiro `eval $(minikube docker-env)` no mesmo terminal).*
+*(Nota: Se estiver usando o Minikube, execute primeiro `eval $(minikube docker-env)` no terminal antes de buildar as imagens).*
 
 #### Aplicar manifestos
 ```bash
@@ -124,11 +114,23 @@ Para expor os endpoints das redes internas do Kubernetes para o seu computador:
 
 ---
 
+### 3. Executando com Docker compose (Alternativa Simplificada)
+Caso não possua um cluster Kubernetes configurado ou queira apenas testar as aplicações rapidamente sem a infraestrutura complexa de monitoramento, utilize o Docker Compose:
+```bash
+# Sobe banco, APIs, frontend e filas de forma simplificada
+docker-compose up --build -d
+
+# Prepara as tabelas e adiciona massa de testes
+docker compose exec main-api bundle exec rails db:prepare db:seed
+```
+
+---
+
 ### Executando testes de estresse
 Para rodar simulações de carga concorrente pesada de até 7.500 requisições por segundo, o teste K6 deve rodar dentro do próprio cluster para evitar gargalos na interface virtual de rede do host local:
 ```bash
-# Dispara o job de teste de estresse
-kubectl apply -f k8s/k6-load-test.yaml
+# Dispara o job de teste de estresse (quando os servicos ja estiverem prontos)
+kubectl apply -f k6/k8s-load-test.yaml
 
 # Visualiza os relatórios gerados em tempo real
 kubectl logs -f job/k6-heavy-test -c k6

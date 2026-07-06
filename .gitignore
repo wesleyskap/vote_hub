@@ -1,6 +1,8 @@
 # Dependency directories (never commit node_modules)
 node_modules/
 **/node_modules/
+docs/
+general/
 
 # Build outputs
 /frontend/apps/web/dist/

@@ -87,18 +87,8 @@ Stop-Process -Name kubectl -Force
 killall kubectl
 ```
 
-### 2. Running with Docker Compose
-Recommended for simple local testing.
-```bash
-# Spin up db, APIs, frontend, and queues
-docker-compose up --build -d
-
-# Run migrations and seed data
-docker compose exec main-api bundle exec rails db:prepare db:seed
-```
-
-### 3. Running with Kubernetes
-Recommended for production simulations and stress tests.
+### 2. Configuration and Deploy with Kubernetes (Primary Method)
+To run the application in the full ecosystem simulating a production environment, it is mandatory to have an active and configured Kubernetes cluster (such as **Docker Desktop Kubernetes**, **Minikube**, or **Kind**).
 
 #### Compile local Docker images
 Generate local builds so the Kubernetes cluster can load them:
@@ -107,7 +97,7 @@ docker build -t bbb-ingestion:local ./ingestion
 docker build -t bbb-main-api:local ./backend
 docker build -t bbb-frontend:local ./frontend
 ```
-*(Note: If using Minikube, execute `eval $(minikube docker-env)` in the terminal first).*
+*(Note: If using Minikube, execute `eval $(minikube docker-env)` in the terminal first before building).*
 
 #### Apply manifests
 ```bash
@@ -121,11 +111,23 @@ Expose the Kubernetes internal network ports to your localhost:
 
 ---
 
+### 3. Running with Docker Compose (Simplified Alternative)
+If you do not have a Kubernetes cluster configured or want to quickly test the services without the complex monitoring infrastructure, run via Docker Compose:
+```bash
+# Spin up db, APIs, frontend, and queues in a simplified manner
+docker-compose up --build -d
+
+# Run migrations and seed data
+docker compose exec main-api bundle exec rails db:prepare db:seed
+```
+
+---
+
 ### Running stress tests
 To run heavy concurrency simulations of up to 7,500 requests per second, the K6 load test must run inside the cluster to avoid virtual network host adapter bottlenecks:
 ```bash
-# Apply the load test job
-kubectl apply -f k8s/k6-load-test.yaml
+# Apply the load test job (once services are ready)
+kubectl apply -f k6/k8s-load-test.yaml
 
 # Monitor live reports and console outputs
 kubectl logs -f job/k6-heavy-test -c k6
