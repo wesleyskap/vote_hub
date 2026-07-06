@@ -17,14 +17,13 @@ jobs:
       - name: Configurar Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.26'
           cache-dependency-path: ingestion/go.sum
 
       - name: Rodar testes unitarios
         env:
           GOPROXY: direct
           GOSUMDB: off
-          GOTOOLCHAIN: local
         run: |
           cd ingestion
           go test ./... -v
