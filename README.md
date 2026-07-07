@@ -157,13 +157,20 @@ Após executar, os seguintes endereços estarão disponíveis:
 
 | Serviço | Endereço local |
 |---|---|
-| Interface de Votação (Frontend) | http://localhost:3000 |
+| **Tela de Votação** | http://localhost:3000/ |
+| **Parciais ao Vivo** | http://localhost:3000/parciais |
+| **Painel Admin** *(interno)* | http://localhost:3000/admin |
 | Main API (Rails — Relatórios) | http://localhost:3001 |
 | Ingestion API (Go — Votos) | http://localhost:8080 |
 | Ingestion API (K6 — Porta NodePort) | http://localhost:30080 |
 | Grafana (Painéis de métricas) | http://localhost:3003 |
 | Runiq Dashboard (Workers) | http://localhost:8082 |
 | Promtail (Service Discovery) | http://localhost:9080/service-discovery |
+
+> **Rotas do frontend:**
+> - `/` — tela principal de votação com os cards dos participantes.
+> - `/parciais` — resultados ao vivo com polling automático a cada 3s.
+> - `/admin` — painel interno de controle com métricas agregadas e histórico por hora. Esta rota **não está linkada publicamente** no header — acesse diretamente pela URL.
 
 ---
 
@@ -172,15 +179,21 @@ Após executar, os seguintes endereços estarão disponíveis:
 > O K6 roda **dentro do cluster** para evitar gargalos da rede virtual do Docker Desktop.
 > Certifique-se de que todos os pods do `ingestion-api` e `ingestion-worker` estão `Running` antes de disparar.
 
+Use os scripts auxiliares da pasta `k6/` — eles geram o ConfigMap automaticamente a partir do arquivo `.js` local e disparam o Job, sem necessidade de manter o script duplicado no YAML:
+
 ```bash
-# Disparar o Job de carga (7.500 RPS por 3 minutos)
-kubectl apply -f k6/k8s-load-test.yaml
+# Windows (PowerShell)
+.\k6\run-k6.ps1
+
+# Linux / macOS
+chmod +x k6/run-k6.sh && ./k6/run-k6.sh
 ```
 
-Acompanhe o progresso em tempo real:
-```bash
-kubectl logs -f job/k6-heavy-test -c k6
-```
+Os scripts executam os 4 passos automaticamente:
+1. Remove o Job anterior (se existir)
+2. Gera o ConfigMap diretamente do `k6/load_test_7k.js` local
+3. Cria o Job no cluster
+4. Exibe os logs em tempo real
 
 Ao final do teste, um relatório customizado será impresso automaticamente:
 ```
@@ -202,12 +215,6 @@ Ao final do teste, um relatório customizado será impresso automaticamente:
     - P99 (SLA):      686.42ms
     - Maximo:         5730.00ms
 ==================================================
-```
-
-Para rodar novamente após um teste anterior, delete o Job antes:
-```bash
-kubectl delete job k6-heavy-test
-kubectl apply -f k6/k8s-load-test.yaml
 ```
 
 ---

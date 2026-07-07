@@ -9,9 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@bbb/core": "*",
+    "@types/react-router-dom": "^5.3.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@bbb/core": "*"
+    "react-router-dom": "^7.18.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",
