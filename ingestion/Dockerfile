@@ -2,7 +2,6 @@ FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 
-COPY orkai-runiq ./orkai-runiq
 COPY go.mod go.sum ./
 RUN go mod download
 
