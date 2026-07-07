@@ -4,6 +4,26 @@ Todas as mudancas e evolucoes deste projeto serao documentadas neste arquivo. O 
 
 ---
 
+## [1.0.6] - 2026-07-07
+
+### Adicionado
+- Frontend redesenhado com tema claro (white/light): cards com sombra suave, paleta roxa/pink vibrante e tipografia escura, substituindo o tema dark/glassmorphism.
+- Roteamento real com `react-router-dom` (BrowserRouter): rota `/` (votacao), `/parciais` (resultados ao vivo) e `/admin` (painel interno sem link publico no header).
+- `VotingPage`: tela de votacao focada com hero section e dois cards de participantes.
+- `ResultsPage`: resultados ao vivo com polling a cada 3s, foto miniatura dos participantes e contagem absoluta de votos.
+- `AdminPage`: painel interno com badge de aviso, cards de metricas e historico por hora com polling a cada 5s.
+- `ParticipantCard`: confirmacao visual animada pos-voto com checkmark e countdown de 2s antes do redirect para `/parciais`.
+- `vite.config.ts` configurado com `historyApiFallback` para SPA routing no dev server.
+- `k8s/frontend.yaml`: `imagePullPolicy` alterado para `Never` para uso exclusivo da imagem local no Docker Desktop.
+- `README.md`: tabela de enderecos expandida com as 3 rotas do frontend e descricao de cada uma.
+
+### Corrigido
+- `ingestion/Dockerfile`: removida instrucao `COPY orkai-runiq` que exigia o repositorio local presente no contexto de build — o pacote e resolvido via `go mod download` do registry publico.
+- Importacao nao utilizada de `useState` em `VotingPage.tsx` causava erro de build TypeScript.
+- Uso de `votes_by_participant` em `ResultsPage.tsx` incompativel com o tipo `ParedaoResults` — substituido por calculo derivado de `percentage * total_votes`.
+
+---
+
 ## [1.0.5] - 2026-07-06
 
 ### Documentacao
