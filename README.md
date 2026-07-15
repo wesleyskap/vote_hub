@@ -133,7 +133,18 @@ docker build -t bbb-frontend:local ./frontend
 
 #### Passo 3 — Aplicar todos os manifestos
 
+Se você já tinha o projeto rodando e deseja limpar tudo para subir do zero:
 ```bash
+# Limpa os recursos anteriores
+kubectl delete -f k8s/
+
+# Verifica se os pods foram limpos
+kubectl get pods
+```
+
+Para aplicar os manifestos novamente:
+```bash
+# Aplica os manifestos
 kubectl apply -f k8s/
 ```
 
@@ -142,6 +153,18 @@ Aguarde todos os pods ficarem prontos (leva cerca de 1-2 minutos):
 kubectl get pods --watch
 ```
 Todos os pods devem estar com status `Running` antes de continuar.
+
+> [!NOTE]
+> O script de entrypoint (`docker-entrypoint`) do Rails roda o `db:prepare` automaticamente ao iniciar o pod `main-api`.
+> 
+> Para verificar se o banco de dados e as tabelas foram criados corretamente:
+> ```bash
+> # Descubra o nome do pod do postgres
+> $POD_NAME = (kubectl get pods -l app=postgres -o jsonpath="{.items[0].metadata.name}")
+> 
+> # Acesse o psql e liste as tabelas do banco bbb_development
+> kubectl exec -it $POD_NAME -- psql -U postgres -d bbb_development -c "\dt"
+> ```
 
 #### Passo 4 — Iniciar os túneis de porta (Port-Forward)
 
@@ -174,26 +197,29 @@ Após executar, os seguintes endereços estarão disponíveis:
 
 ---
 
-#### Passo 5 — Rodar o teste de carga com K6
+#### Passo 5 — Rodar o teste de carga com K6 e validação completa
 
 > O K6 roda **dentro do cluster** para evitar gargalos da rede virtual do Docker Desktop.
 > Certifique-se de que todos os pods do `ingestion-api` e `ingestion-worker` estão `Running` antes de disparar.
 
-Use os scripts auxiliares da pasta `k6/` — eles geram o ConfigMap automaticamente a partir do arquivo `.js` local e disparam o Job, sem necessidade de manter o script duplicado no YAML:
+Para rodar os testes e acompanhar os resultados:
 
 ```bash
-# Windows (PowerShell)
-.\k6\run-k6.ps1
+# Deleta o teste anterior se existir
+kubectl delete job k6-heavy-test
 
-# Linux / macOS
-chmod +x k6/run-k6.sh && ./k6/run-k6.sh
+# Aplica o Job de teste de carga
+kubectl apply -f .\k6\k8s-load-test.yaml
+
+# Acompanha a execução do K6 em tempo real
+kubectl logs job/k6-heavy-test -c k6 -f
 ```
 
-Os scripts executam os 4 passos automaticamente:
-1. Remove o Job anterior (se existir)
-2. Gera o ConfigMap diretamente do `k6/load_test_7k.js` local
-3. Cria o Job no cluster
-4. Exibe os logs em tempo real
+Para uma **validação completa**, você também pode simular um erro no Ingestion Worker (para que ele apareça no Grafana Loki) rodando em outro terminal:
+```bash
+# Windows (PowerShell)
+.\simulate_error.ps1
+```
 
 Ao final do teste, um relatório customizado será impresso automaticamente:
 ```

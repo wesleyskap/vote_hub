@@ -1,0 +1,40 @@
+---
+# -------------------------------------------------
+# Job que executa o script k6
+# O ConfigMap é gerado automaticamente pelo script run-k6.ps1 / run-k6.sh
+# a partir do arquivo ./load_test_7k.js local.
+# -------------------------------------------------
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k6-heavy-test
+  namespace: default
+spec:
+  template:
+    spec:
+      containers:
+        - name: k6
+          image: grafana/k6:latest
+          command: ["k6", "run", "/scripts/load_test_7k.js"]
+          env:
+            - name: API_URL
+              value: "http://ingestion-api:8080/api/v1/votes"
+          volumeMounts:
+            - name: script-volume
+              mountPath: /scripts
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "1Gi"
+            limits:
+              cpu: "4000m"
+              memory: "10Gi"
+      restartPolicy: Never
+      volumes:
+        - name: script-volume
+          configMap:
+            name: k6-test-script
+            items:
+              - key: load_test_7k.js
+                path: load_test_7k.js
+  backoffLimit: 0
